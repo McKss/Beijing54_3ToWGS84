@@ -1,0 +1,5 @@
+思路：在DataSource中创建一个新的点要素图层，点坐标取面要素几何中心坐标，通过点坐标转换bd09经纬度坐标，然后查询地点地址信息，添加到点要素属性中
+
+面要素获取几何中心：Feature(GetGeomFieldRef) : Geometry(GetPoints(dimension)) : double[][]
+
+新建图层：DataSource(CreateLayer) : Layer(CreateFeature) 

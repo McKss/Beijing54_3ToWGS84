@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="http://localhost:8080/geoserver/openlayers3/ol.css" type="text/css">
+    <style>
+        .map {
+                  width: 100%;
+                  border: 1px solid black;
+            }
+    </style>
+    <script src="http://localhost:8080/geoserver/openlayers3/ol.js"></script>
+    <title>view</title>
+</head>
+
+<body>
+    <div id="mapId" class="map"></div>
+    <p>
+        <input type="checkbox" id="cb_daolu" checked=true onclick="cb_onclick(this.id, this.checked)">
+        道路
+        <input type="checkbox" id="cb_jzw" checked=true onclick="cb_onclick(this.id, this.checked)">
+        建筑物
+        <input type="checkbox" id="cb_center" checked=true onclick="cb_onclick(this.id, this.checked)">
+        建筑物中心
+    </p>
+    <p id="info"></p>
+    <script type="text/javascript">
+
+        var format = 'image/png';
+        var projCode = 'EPSG:2437';
+
+        var untiled_jzw = new ol.layer.Image({
+            source: new ol.source.ImageWMS({
+                ratio: 1,
+                url: 'http://localhost:8080/geoserver/DLG_SHP/wms',
+                params: {
+                    'FORMAT': format,
+                    'VERSION': '1.1.1',
+                    "STYLES": '',
+                    "LAYERS": 'DLG_SHP:RES_PY_K_Clip',
+                    "exceptions": 'application/vnd.ogc.se_inimage',
+                }
+            })
+        });
+
+        var untiled_center = new ol.layer.Image({
+            source: new ol.source.ImageWMS({
+                ratio: 1,
+                url: 'http://localhost:8080/geoserver/building_center/wms',
+                params: {
+                    'FORMAT': format,
+                    'VERSION': '1.1.1',
+                    "STYLES": '',
+                    "LAYERS": 'building_center:BUILDING_CENTER',
+                    "exceptions": 'application/vnd.ogc.se_inimage',
+                }
+            })
+        });
+
+        var untiled_daolu = new ol.layer.Image({
+            source: new ol.source.ImageWMS({
+                ratio: 1,
+                url: 'http://localhost:8080/geoserver/DLG_SHP/wms',
+                params: {
+                    'FORMAT': format,
+                    'VERSION': '1.1.1',
+                    "STYLES": '',
+                    "LAYERS": 'DLG_SHP:TRA_LN_K_Clip',
+                    "exceptions": 'application/vnd.ogc.se_inimage',
+                }
+            })
+        });
+
+        var projection = new ol.proj.Projection({
+            code: projCode,
+            units: 'degrees',
+            axisOrientation: 'neu',
+            global: true
+        });
+
+        var bounds = [509636.5215957826, 3247695.9322719392,
+            509922.16289993515, 3247859.3295999994];
+
+        var map = new ol.Map({
+            controls: ol.control.defaults({ attribution: false }).extend([]),
+            target: 'mapId',
+            layers: [untiled_jzw, untiled_center, untiled_daolu],
+            view: new ol.View({
+                projection: projection
+            })
+        });
+        map.getView().fit(bounds, map.getSize());
+
+        map.on('singleclick', function (evt) {
+            var view = map.getView();
+            var viewResolution = view.getResolution();
+            var source = untiled_center.getSource();
+            var url = source.getGetFeatureInfoUrl(
+                evt.coordinate, viewResolution, view.getProjection(),
+                { 'INFO_FORMAT': 'text/html', 'FEATURE_COUNT': 50 });
+            if (url) {
+                window.open(url, "_blank");
+                document.getElementById('info').innerHTML = '<iframe seamless src="' + url + '">url</iframe>'; // 报错
+            }
+
+        });
+
+        function cb_onclick(id, checked) {
+            switch (id) {
+                case "cb_jzw": {
+                    if (checked) {
+                        // 加载建筑物图层
+                        untiled_jzw.setVisible(true);
+                    }
+                    else {
+                        // 移除建筑物图层
+                        untiled_jzw.setVisible(false);
+                    }
+                }
+                break;
+                case "cb_center": {
+                    if (checked) {
+                        untiled_center.setVisible(true);
+                    }
+                    else {
+                        untiled_center.setVisible(false);
+                    }
+                }
+                break;
+                case "cb_daolu": {
+                    if (checked) {
+                        untiled_daolu.setVisible(true);
+                    }
+                    else {
+                        untiled_daolu.setVisible(false);
+                    }
+                }
+                break;
+                default:
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
